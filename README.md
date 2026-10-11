@@ -323,11 +323,11 @@ python3 scripts/decrypt-backup.py /private/path/full-backup.ttbk --key /private/
 Для текущего продукта используется один приватный репозиторий. Его корень — содержимое этой папки: `frontend/`, `backend/`, `saas/`, `scripts/`, `ci/`, `storage/`, `compose.yaml` и `.github/`. У фронта, Go-backend и панели SaaS отдельные сборки Docker, но общая история изменений и проверки совместимости. Старые Java-проекты и остальные папки родительского workspace в этот репозиторий не входят.
 
 1. На [GitHub](https://github.com/new) создать пустой **Private** репозиторий `teeth-tech-crm-mvp`. Не добавлять README, лицензию или `.gitignore`: они уже находятся в исходниках.
-2. Из этой папки проверить состав первого коммита и подключить адрес созданного репозитория. Для аккаунта `zhanssss` команды такие:
+2. Из этой папки проверить состав первого коммита и подключить адрес созданного репозитория. Для выбранного репозитория `Mussinn/teeth-tech-crm-mvp` команды такие:
 
    ```sh
    git status --short
-   git remote add origin https://github.com/zhanssss/teeth-tech-crm-mvp.git
+   git remote add origin https://github.com/Mussinn/teeth-tech-crm-mvp.git
    git push -u origin main
    ```
 
