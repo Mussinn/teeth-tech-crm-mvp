@@ -23,7 +23,7 @@ services:
       timeout: 3s
       retries: 90
   integration:
-    image: golang:1.26.8-alpine
+    image: golang:1.26.9-alpine
     working_dir: /src
     environment:
       MVP_TEST_DATABASE_URL: postgres://mvp:CIOnlyDatabasePassword2026@postgres:5432/teethtech_mvp_go_test?sslmode=disable
