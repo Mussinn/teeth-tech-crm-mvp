@@ -1,4 +1,4 @@
-FROM golang:1.26.9-alpine AS build
+FROM golang:1.27.0-alpine AS build
 ENV CGO_ENABLED=0 GOBIN=/out
 RUN go install github.com/minio/minio@RELEASE.2025-10-15T17-29-55Z
 FROM alpine:3.23
