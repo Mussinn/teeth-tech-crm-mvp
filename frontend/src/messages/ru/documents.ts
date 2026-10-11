@@ -1,0 +1,22 @@
+export default {
+    completedActs: {
+        badge: 'Документы', title: 'Акт выполненных работ',
+        subtitle: 'Закрытые ордера, выполненные работы, оплаты и задолженность клиник.',
+        periodFrom: 'Период с', periodTo: 'Период по', clinic: 'Клиника', allClinics: 'Все клиники',
+        loading: 'Загрузка…', showOrders: 'Показать ордера',
+        validation: {period: 'Укажите начало и конец периода.', dates: 'Начало периода не может быть позже конца.'},
+        candidatesError: 'Не удалось загрузить закрытые ордера. Проверьте параметры и повторите попытку.',
+        closedOrders: 'Закрытые ордера', selectedCount: 'Выбрано: {selected} из {total}',
+        search: 'Ордер, пациент или доктор…', debtOnly: 'Только с долгом',
+        generating: 'Формирование…', generate: 'Сформировать акт', previewError: 'Не удалось сформировать предпросмотр по выбранным ордерам.',
+        emptyPeriod: 'За выбранный период закрытых ордеров нет.', emptyFilter: 'По текущим фильтрам ордера не найдены.',
+        selectVisible: 'Выбрать все видимые ордера', loadingClosed: 'Загружаем закрытые ордера…',
+        initialHint: 'Выберите период и нажмите «Показать ордера».',
+        print: 'Печать', exportExcel: 'Экспорт Excel', exportPdf: 'Экспорт PDF',
+        statuses: {included: 'В акте {number}', selected: 'Выбран', notCreated: 'Не сформирован'},
+        summary: {number: 'Номер акта', period: 'Период', generated: 'Сформирован', clinics: 'Клиник', orders: 'Закрытых ордеров', works: 'Работ', amount: 'Сумма', paid: 'Оплачено', debt: 'Долг'},
+        act: {period: 'за период {start} — {end}', generated: 'Дата формирования: {date}', customer: 'Заказчик:', bin: 'БИН:', phone: 'Телефон:', address: 'Адрес:', clinicTotal: 'Итого по клинике:', paid: 'Оплачено:', debt: 'Долг:', total: 'Общая сумма:', totalPaid: 'Общая оплата:', totalDebt: 'Общий долг:', executor: 'Исполнитель', customerSignature: 'Заказчик', financier: 'Финансист'},
+        columns: {number: '№', order: 'Ордер', clinic: 'Клиника', completed: 'Дата закрытия', patient: 'Пациент', doctor: 'Доктор', work: 'Работа', quantity: 'Количество', shortQuantity: 'Кол-во', price: 'Цена', discountPercent: 'Скидка %', discountAmount: 'Скидка сумма', amount: 'Сумма', paid: 'Оплачено', paidOrder: 'Оплачено по ордеру', debt: 'Долг', debtOrder: 'Долг по ордеру', works: 'Работ', actStatus: 'Статус акта'},
+        sheetName: 'Акт',
+    },
+} as const;

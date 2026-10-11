@@ -1,0 +1,70 @@
+name: CRM release images
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  checks:
+    uses: ./.github/workflows/ci.yml
+  publish:
+    needs: checks
+    if: github.ref == 'refs/heads/main'
+    environment: release
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        component: [backend, frontend, storage, portal]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with: {persist-credentials: false}
+      - name: Build exact release candidate
+        env:
+          COMPONENT: ${{ matrix.component }}
+        run: |
+          image="ghcr.io/${GITHUB_REPOSITORY,,}-$COMPONENT:${GITHUB_SHA}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          echo "RELEASE_IMAGE=$image" >> "$GITHUB_ENV"
+          case "$COMPONENT" in
+            portal) docker build --pull -f saas/Dockerfile.portal --build-arg TARGETOS=linux --build-arg TARGETARCH=amd64 -t "$image" backend ;;
+            frontend) docker build --pull --build-arg NEXT_PUBLIC_API_URL=/api/backend --build-arg NEXT_PUBLIC_MVP_FINANCE_ENABLED=false --build-arg NEXT_PUBLIC_MVP_WAREHOUSE_ENABLED=false -t "$image" frontend ;;
+            backend|storage) docker build --pull -t "$image" "$COMPONENT" ;;
+            *) exit 1 ;;
+          esac
+      - name: Recheck the actual image that will be published
+        run: |
+          mkdir -p artifacts/release
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD/artifacts/release:/reports" \
+            aquasec/trivy:0.75.0 image --scanners vuln --severity HIGH,CRITICAL --exit-code 1 \
+            --format json --output /reports/security.json "$RELEASE_IMAGE"
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD/artifacts/release:/reports" \
+            aquasec/trivy:0.75.0 image --format cyclonedx --output /reports/sbom.cdx.json "$RELEASE_IMAGE"
+      - name: Publish approved candidate to GHCR
+        env:
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          printf '%s' "$REGISTRY_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          docker push "$RELEASE_IMAGE"
+          docker image inspect "$RELEASE_IMAGE" --format '{{index .RepoDigests 0}}' > artifacts/release/image-digest.txt
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          Path('artifacts/release/manifest.json').write_text(json.dumps({
+              'commit': os.environ['GITHUB_SHA'], 'image': os.environ['RELEASE_IMAGE'],
+              'digest': Path('artifacts/release/image-digest.txt').read_text().strip(),
+              'architecture': 'linux/amd64', 'deployment': 'not-started'
+          }, indent=2))
+          PY
+          docker logout ghcr.io
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-${{ matrix.component }}
+          path: artifacts/release/
+          retention-days: 90

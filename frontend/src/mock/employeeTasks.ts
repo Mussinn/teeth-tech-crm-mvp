@@ -1,0 +1,95 @@
+import { EmployeeTask } from '@/src/types/employee.types';
+
+export const mockTasksByEmployee: Record<string, EmployeeTask[]> = {
+    '1': [
+        {
+            id: 'TT-201',
+            patient: 'Алиев К.',
+            workType: 'Коронка',
+            material: 'Zirconia',
+            deadline: '2026-04-15',
+            status: 'MODELING',
+            priority: 'HIGH',
+        },
+        {
+            id: 'TT-202',
+            patient: 'Турсынова А.',
+            workType: 'Мост',
+            material: 'PMMA',
+            deadline: '2026-04-13',
+            status: 'TODO',
+            priority: 'URGENT',
+        },
+        {
+            id: 'TT-203',
+            patient: 'Иванов Д.',
+            workType: 'Вкладка',
+            material: 'E-max',
+            deadline: '2026-04-18',
+            status: 'POST_PROCESSING',
+            priority: 'MEDIUM',
+        },
+    ],
+    '2': [
+        {
+            id: 'TT-301',
+            patient: 'Серикова М.',
+            workType: 'Виниры',
+            material: 'E-max',
+            deadline: '2026-04-14',
+            status: 'MILLING',
+            priority: 'HIGH',
+        },
+        {
+            id: 'TT-302',
+            patient: 'Петров Н.',
+            workType: 'Коронка',
+            material: 'Zirconia',
+            deadline: '2026-04-16',
+            status: 'DONE',
+            priority: 'LOW',
+        },
+    ],
+    '3': [
+        {
+            id: 'TT-401',
+            patient: 'Ахметов С.',
+            workType: 'Протез',
+            material: 'PMMA',
+            deadline: '2026-04-17',
+            status: 'TODO',
+            priority: 'HIGH',
+        },
+        {
+            id: 'TT-402',
+            patient: 'Касенова Л.',
+            workType: 'Коронка',
+            material: 'Titanium',
+            deadline: '2026-04-12',
+            status: 'MODELING',
+            priority: 'URGENT',
+        },
+    ],
+    '4': [
+        {
+            id: 'TT-501',
+            patient: 'Мусина Г.',
+            workType: 'Коронка',
+            material: 'Zirconia',
+            deadline: '2026-04-19',
+            status: 'MILLING',
+            priority: 'MEDIUM',
+        },
+    ],
+    '5': [
+        {
+            id: 'TT-601',
+            patient: 'Ким А.',
+            workType: 'Контроль заказа',
+            material: '—',
+            deadline: '2026-04-11',
+            status: 'DONE',
+            priority: 'LOW',
+        },
+    ],
+};

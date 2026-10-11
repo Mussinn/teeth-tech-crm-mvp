@@ -1,0 +1,6 @@
+.git
+.env*
+artifacts
+bin
+coverage.out
+*_test.go

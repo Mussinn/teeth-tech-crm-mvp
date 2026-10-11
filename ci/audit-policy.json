@@ -1,0 +1,8 @@
+{
+  "developmentOnly": {
+    "GHSA-vfj7-8cjw-p6xm": {
+      "reviewBy": "2026-11-06",
+      "reason": "braces <=3.0.3 has no upstream fix. Used only by the Next ESLint toolchain on repository-owned patterns, not by patient inputs or the standalone runtime. Runtime audit must remain clean. Review and remove this exception when fixed; it expires automatically."
+    }
+  }
+}

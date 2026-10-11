@@ -1,0 +1,33 @@
+.env
+.env.*
+!.env.example
+# Private runtime files, credentials and laboratory data
+*.key
+*.pem
+*.lic
+*.ttbk
+*.age
+*.p12
+*.pfx
+backups/
+dumps/
+uploads/
+secrets/
+frontend/node_modules/
+frontend/.next/
+frontend/*.tsbuildinfo
+backend/target/
+artifacts/
+saas/.saas-runtime/
+*.log
+.operations.lock
+.DS_Store
+# Local tooling and generated output
+__pycache__/
+*.pyc
+.idea/
+.npm-cache/
+.npm-packs/
+coverage/
+.aws/
+.codex/

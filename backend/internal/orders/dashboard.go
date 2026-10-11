@@ -1,0 +1,38 @@
+package orders
+
+import (
+	"context"
+	"encoding/json"
+	"teethtech.local/crm/internal/dbx"
+	"teethtech.local/crm/internal/identity"
+)
+
+// Dashboard applies role scope before totals, filters and the display cap.
+func (s *Service) Dashboard(ctx context.Context, actor identity.User, search, work, status string) (json.RawMessage, error) {
+	unrestricted := hasRole(actor, "ADMIN") || hasRole(actor, "CHIEF_TECHNICIAN")
+	return dbx.One(ctx, s.pool, `WITH visible AS (
+ SELECT t.*,coalesce((SELECT max(h.changed_at) FROM t_order_task_history h WHERE h.task_id=t.id AND h.field_name='STATUS'),t.created_at) stage_started_at,o.order_number,o.is_active,o.completed_at,o.deadline,p.full_name patient,c.name clinic,doctor.full_name doctor,wt.name work_name,wt.code work_code,d.name direction_name,d.code direction_code,col.code color_code,st.is_terminal,st.is_review,st.sort_order status_sort,st.code status_code,st.name status_name,u.name technician
+ FROM t_order_tasks t JOIN t_orders o ON o.id=t.order_id AND o.deleted_at IS NULL JOIN t_work_types wt ON wt.id=t.work_type_id JOIN t_work_directions d ON d.id=t.work_direction_id JOIN t_order_statuses st ON st.id=t.status_id LEFT JOIN t_colors col ON col.id=t.color_id LEFT JOIN t_clinic_user_cards p ON p.id=o.patient_card_id LEFT JOIN t_clinics c ON c.id=p.clinic_id LEFT JOIN t_clinic_user_cards doctor ON doctor.id=o.doctor_card_id LEFT JOIN t_users u ON u.id=t.dental_technician_id
+ WHERE t.deleted_at IS NULL AND ($1 OR ($2 AND EXISTS(SELECT 1 FROM t_user_work_directions ud WHERE ud.user_id=$3 AND ud.work_direction_id=t.work_direction_id)) OR (NOT $2 AND t.dental_technician_id=$3))
+ AND ($4='' OR concat_ws(' ',o.order_number,p.full_name,c.name,doctor.full_name,wt.name,u.name) ILIKE '%'||$4||'%')
+ AND ($5='' OR wt.code=$5) AND ($6='' OR t.status_id::text=$6)),
+ active AS (SELECT * FROM visible WHERE is_active AND NOT is_terminal),
+ shown AS (SELECT * FROM active ORDER BY deadline NULLS LAST,created_at,id LIMIT $7),
+ cards AS (SELECT status_id,id,created_at,jsonb_build_object('id',id,'orderId',order_id,'orderNumber',order_number,'patientName',coalesce(patient,''),'clinicName',coalesce(clinic,''),'doctorName',coalesce(doctor,''),'workTypeName',work_name,'workDirectionId',work_direction_id,'workDirectionName',direction_name,'workDirectionCode',direction_code,'colorCode',color_code,'quantity',quantity,'technicianName',coalesce(technician,'Не назначен'),'stageStartedAt',stage_started_at,'stageDays',greatest(0,floor(extract(epoch FROM (now()-stage_started_at))/86400)),'deadline',deadline,'isOverdue',deadline<(now() AT TIME ZONE 'Asia/Aqtobe')::date,
+ 'toothNumbers',coalesce((SELECT jsonb_agg(tooth_number ORDER BY tooth_number) FROM t_order_task_teeth WHERE order_task_id=t.id),'[]'::jsonb),
+ 'materialIds',coalesce((SELECT jsonb_agg(m.id ORDER BY m.name,m.id) FROM t_order_task_materials tm JOIN t_materials m ON m.id=tm.material_id WHERE tm.order_task_id=t.id),'[]'::jsonb),
+ 'materialNames',coalesce((SELECT jsonb_agg(m.name ORDER BY m.name,m.id) FROM t_order_task_materials tm JOIN t_materials m ON m.id=tm.material_id WHERE tm.order_task_id=t.id),'[]'::jsonb)) body FROM shown t),
+ columns AS (SELECT st.sort_order,st.id,jsonb_build_object('statusId',st.id,'statusCode',st.code,'statusName',st.name,'count',(SELECT count(*) FROM active WHERE status_id=st.id),'tasks',coalesce((SELECT jsonb_agg(body ORDER BY created_at,id) FROM cards WHERE status_id=st.id),'[]'::jsonb)) body FROM t_order_statuses st WHERE st.is_active AND NOT st.is_terminal),
+ completed AS (SELECT v.*,h.finished_at FROM visible v JOIN LATERAL(SELECT max(k.completed_at) finished_at FROM mvp_task_completions k WHERE k.task_id=v.id AND k.terminal) h ON true WHERE v.is_terminal),
+ recent AS (SELECT jsonb_build_object('id',id,'orderNumber',order_number,'patientName',coalesce(patient,''),'workTypeName',work_name,'workDirectionName',direction_name,'technicianName',coalesce(technician,'Не назначен'),'completedAt',coalesce(finished_at,completed_at,updated_at)) body FROM completed ORDER BY coalesce(finished_at,completed_at,updated_at) DESC,id LIMIT 10)
+ SELECT jsonb_build_object(
+ 'completedThisMonth',(SELECT count(*) FROM completed WHERE coalesce(finished_at,completed_at,updated_at)>=date_trunc('month',now() AT TIME ZONE 'Asia/Aqtobe') AT TIME ZONE 'Asia/Aqtobe'),
+ 'averageCompletionDays',(SELECT coalesce(round(avg(greatest(0,extract(epoch FROM(coalesce(finished_at,completed_at,updated_at)-created_at))/86400))::numeric,1),0) FROM completed),
+ 'dueTodayCount',(SELECT count(*) FROM active WHERE deadline=(now() AT TIME ZONE 'Asia/Aqtobe')::date),
+ 'dueSoonCount',(SELECT count(*) FROM active WHERE deadline BETWEEN (now() AT TIME ZONE 'Asia/Aqtobe')::date AND (now() AT TIME ZONE 'Asia/Aqtobe')::date+3),
+ 'technicianLoads',coalesce((SELECT jsonb_agg(body ORDER BY n DESC,name) FROM (SELECT count(*) n,coalesce(technician,'Не назначен') name,jsonb_build_object('id',dental_technician_id,'name',coalesce(technician,'Не назначен'),'count',count(*),'overdue',count(*) FILTER(WHERE deadline<(now() AT TIME ZONE 'Asia/Aqtobe')::date)) body FROM active GROUP BY dental_technician_id,technician) loads),'[]'::jsonb),
+ 'clinicLoads',coalesce((SELECT jsonb_agg(body ORDER BY n DESC,name) FROM (SELECT count(*) n,coalesce(clinic,'Без клиники') name,jsonb_build_object('name',coalesce(clinic,'Без клиники'),'count',count(*),'overdue',count(*) FILTER(WHERE deadline<(now() AT TIME ZONE 'Asia/Aqtobe')::date)) body FROM active GROUP BY clinic) loads),'[]'::jsonb),
+ 'materialLoads',coalesce((SELECT jsonb_agg(body ORDER BY n DESC,name) FROM (SELECT m.name,count(*) n,jsonb_build_object('name',m.name,'count',count(*)) body FROM active a JOIN t_order_task_materials tm ON tm.order_task_id=a.id JOIN t_materials m ON m.id=tm.material_id GROUP BY m.id,m.name) loads),'[]'::jsonb),
+ 'attentionTasks',coalesce((SELECT jsonb_agg(body ORDER BY overdue DESC,deadline NULLS LAST,id) FROM (SELECT id,deadline,deadline<(now() AT TIME ZONE 'Asia/Aqtobe')::date overdue,jsonb_build_object('id',id,'orderId',order_id,'orderNumber',order_number,'workTypeName',work_name,'clinicName',coalesce(clinic,''),'technicianName',coalesce(technician,'Не назначен'),'statusName',status_name,'deadline',deadline,'isOverdue',deadline<(now() AT TIME ZONE 'Asia/Aqtobe')::date,'unassigned',dental_technician_id IS NULL,'stageDays',greatest(0,floor(extract(epoch FROM (now()-stage_started_at))/86400))) body FROM active WHERE deadline<=(now() AT TIME ZONE 'Asia/Aqtobe')::date OR dental_technician_id IS NULL OR stage_started_at<=now()-interval '3 days' ORDER BY (deadline<(now() AT TIME ZONE 'Asia/Aqtobe')::date) DESC NULLS LAST,deadline NULLS LAST,id LIMIT 12) attention),'[]'::jsonb),
+ 'unassignedTasksCount',(SELECT count(*) FROM active WHERE dental_technician_id IS NULL),'stalledTasksCount',(SELECT count(*) FROM active WHERE stage_started_at<=now()-interval '3 days'),'totalTasksCount',(SELECT count(*) FROM active),'inProgressTasksCount',(SELECT count(*) FROM active WHERE NOT is_review),'onReviewTasksCount',(SELECT count(*) FROM active WHERE is_review),'overdueTasksCount',(SELECT count(*) FROM active WHERE deadline<(now() AT TIME ZONE 'Asia/Aqtobe')::date),'displayedTasksCount',(SELECT count(*) FROM shown),'cardsTruncated',(SELECT count(*) FROM active)>$7,'columns',coalesce((SELECT jsonb_agg(body ORDER BY sort_order,id) FROM columns),'[]'::jsonb),'totalCompletedCount',(SELECT count(*) FROM completed),'recentCompletedTasks',coalesce((SELECT jsonb_agg(body) FROM recent),'[]'::jsonb))`, unrestricted, hasRole(actor, "DISPATCHER"), actor.ID, search, work, status, s.maxKanbanCards)
+}

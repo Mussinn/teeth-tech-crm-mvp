@@ -1,0 +1,22 @@
+export default {
+    completedActs: {
+        badge: 'Documents', title: 'Completed work statement',
+        subtitle: 'Closed orders, completed work, payments, and clinic debt.',
+        periodFrom: 'Period from', periodTo: 'Period to', clinic: 'Clinic', allClinics: 'All clinics',
+        loading: 'Loading…', showOrders: 'Show orders',
+        validation: {period: 'Specify the start and end of the period.', dates: 'The period start cannot be after the end.'},
+        candidatesError: 'Could not load closed orders. Check the parameters and try again.',
+        closedOrders: 'Closed orders', selectedCount: 'Selected: {selected} of {total}',
+        search: 'Order, patient, or doctor…', debtOnly: 'With debt only',
+        generating: 'Generating…', generate: 'Generate statement', previewError: 'Could not generate a preview for the selected orders.',
+        emptyPeriod: 'No closed orders in the selected period.', emptyFilter: 'No orders match the current filters.',
+        selectVisible: 'Select all visible orders', loadingClosed: 'Loading closed orders…',
+        initialHint: 'Select a period and click “Show orders”.',
+        print: 'Print', exportExcel: 'Export Excel', exportPdf: 'Export PDF',
+        statuses: {included: 'In statement {number}', selected: 'Selected', notCreated: 'Not generated'},
+        summary: {number: 'Statement number', period: 'Period', generated: 'Generated', clinics: 'Clinics', orders: 'Closed orders', works: 'Works', amount: 'Amount', paid: 'Paid', debt: 'Debt'},
+        act: {period: 'for {start} — {end}', generated: 'Generated: {date}', customer: 'Customer:', bin: 'BIN:', phone: 'Phone:', address: 'Address:', clinicTotal: 'Clinic total:', paid: 'Paid:', debt: 'Debt:', total: 'Total amount:', totalPaid: 'Total paid:', totalDebt: 'Total debt:', executor: 'Provider', customerSignature: 'Customer', financier: 'Financier'},
+        columns: {number: 'No.', order: 'Order', clinic: 'Clinic', completed: 'Closed on', patient: 'Patient', doctor: 'Doctor', work: 'Work', quantity: 'Quantity', shortQuantity: 'Qty.', price: 'Price', discountPercent: 'Discount %', discountAmount: 'Discount amount', amount: 'Amount', paid: 'Paid', paidOrder: 'Paid for order', debt: 'Debt', debtOrder: 'Order debt', works: 'Works', actStatus: 'Statement status'},
+        sheetName: 'Statement',
+    },
+} as const;

@@ -1,0 +1,38 @@
+# Dedicated, disposable integration environment. Never uses application .env or volumes.
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: teethtech_mvp_go_test
+      POSTGRES_USER: mvp
+      POSTGRES_PASSWORD: CIOnlyDatabasePassword2026
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U mvp -d teethtech_mvp_go_test']
+      interval: 2s
+      timeout: 3s
+      retries: 60
+  storage:
+    build: ../storage
+    environment:
+      MINIO_ROOT_USER: ci-storage
+      MINIO_ROOT_PASSWORD: CIOnlyStoragePassword2026
+    command: server /data --console-address :9001
+    healthcheck:
+      test: [CMD, wget, -q, --spider, 'http://127.0.0.1:9000/minio/health/live']
+      interval: 2s
+      timeout: 3s
+      retries: 90
+  integration:
+    image: golang:1.26.8-alpine
+    working_dir: /src
+    environment:
+      MVP_TEST_DATABASE_URL: postgres://mvp:CIOnlyDatabasePassword2026@postgres:5432/teethtech_mvp_go_test?sslmode=disable
+      AWS_S3_ENDPOINT: http://storage:9000
+      AWS_S3_ACCESS_KEY: ci-storage
+      AWS_S3_SECRET_KEY: CIOnlyStoragePassword2026
+    volumes:
+      - ../backend:/src:ro
+    command: [go, test, '-tags=mvp', '-count=1', '-v', ./integration]
+    depends_on:
+      postgres: {condition: service_healthy}
+      storage: {condition: service_healthy}

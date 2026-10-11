@@ -1,0 +1,22 @@
+export default {
+    completedActs: {
+        badge: 'Құжаттар', title: 'Орындалған жұмыстар актісі',
+        subtitle: 'Жабылған тапсырыстар, орындалған жұмыстар, төлемдер және клиникалардың берешегі.',
+        periodFrom: 'Кезеңнің басталуы', periodTo: 'Кезеңнің соңы', clinic: 'Клиника', allClinics: 'Барлық клиникалар',
+        loading: 'Жүктелуде…', showOrders: 'Тапсырыстарды көрсету',
+        validation: {period: 'Кезеңнің басталуы мен соңын көрсетіңіз.', dates: 'Кезеңнің басталуы соңынан кейін болмауы керек.'},
+        candidatesError: 'Жабылған тапсырыстарды жүктеу мүмкін болмады. Параметрлерді тексеріп, қайталап көріңіз.',
+        closedOrders: 'Жабылған тапсырыстар', selectedCount: 'Таңдалды: {selected} / {total}',
+        search: 'Тапсырыс, пациент немесе дәрігер…', debtOnly: 'Тек берешегі бар',
+        generating: 'Құрылуда…', generate: 'Акт құру', previewError: 'Таңдалған тапсырыстар бойынша алдын ала қарауды құру мүмкін болмады.',
+        emptyPeriod: 'Таңдалған кезеңде жабылған тапсырыстар жоқ.', emptyFilter: 'Ағымдағы сүзгілер бойынша тапсырыстар табылмады.',
+        selectVisible: 'Барлық көрінетін тапсырыстарды таңдау', loadingClosed: 'Жабылған тапсырыстар жүктелуде…',
+        initialHint: 'Кезеңді таңдап, «Тапсырыстарды көрсету» түймесін басыңыз.',
+        print: 'Басып шығару', exportExcel: 'Excel-ге экспорт', exportPdf: 'PDF-ке экспорт',
+        statuses: {included: '{number} актісінде', selected: 'Таңдалды', notCreated: 'Құрылмаған'},
+        summary: {number: 'Акт нөмірі', period: 'Кезең', generated: 'Құрылды', clinics: 'Клиникалар', orders: 'Жабылған тапсырыстар', works: 'Жұмыстар', amount: 'Сома', paid: 'Төленді', debt: 'Берешек'},
+        act: {period: '{start} — {end} кезеңі үшін', generated: 'Құрылған күні: {date}', customer: 'Тапсырыс беруші:', bin: 'БСН:', phone: 'Телефон:', address: 'Мекенжай:', clinicTotal: 'Клиника бойынша барлығы:', paid: 'Төленді:', debt: 'Берешек:', total: 'Жалпы сома:', totalPaid: 'Жалпы төлем:', totalDebt: 'Жалпы берешек:', executor: 'Орындаушы', customerSignature: 'Тапсырыс беруші', financier: 'Қаржыгер'},
+        columns: {number: '№', order: 'Тапсырыс', clinic: 'Клиника', completed: 'Жабылған күні', patient: 'Пациент', doctor: 'Дәрігер', work: 'Жұмыс', quantity: 'Саны', shortQuantity: 'Саны', price: 'Баға', discountPercent: 'Жеңілдік %', discountAmount: 'Жеңілдік сомасы', amount: 'Сома', paid: 'Төленді', paidOrder: 'Тапсырыс бойынша төленді', debt: 'Берешек', debtOrder: 'Тапсырыс берешегі', works: 'Жұмыстар', actStatus: 'Акт күйі'},
+        sheetName: 'Акт',
+    },
+} as const;

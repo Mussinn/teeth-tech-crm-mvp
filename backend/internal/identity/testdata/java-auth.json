@@ -1,0 +1,7 @@
+{
+  "secret" : "MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=",
+  "subject" : "admin@teethtech.kz",
+  "token" : "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbkB0ZWV0aHRlY2gua3oiLCJpYXQiOjE1Nzc4MzY4MDAsImV4cCI6NDEwMjQ0NDgwMH0.6JokL5LoKHVYlFrZv6ezKbUnGuCOXpekxh47OShNsY8",
+  "password" : "Migration-only-password-123",
+  "passwordHash" : "$2a$10$VQ1mSwlr.EgzE8DTIl7H/OiAfrpzxANoi76CNI5RmAwYSfY/AE7fe"
+}

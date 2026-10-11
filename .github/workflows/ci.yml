@@ -1,0 +1,99 @@
+name: CRM checks
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  workflow_call:
+  schedule:
+    - cron: '20 2 * * 1'
+permissions:
+  contents: read
+concurrency:
+  group: checks-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: npm run typecheck && npm run lint && npm run test && npm run build
+        working-directory: frontend
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+          NEXT_PUBLIC_MVP_WAREHOUSE_ENABLED: 'false'
+          NEXT_PUBLIC_MVP_FINANCE_ENABLED: 'false'
+      - run: python3 scripts/ci-security.py
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: npm-security
+          path: artifacts/production-audit/npm-*-audit.json
+          retention-days: 14
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - run: go mod verify && go vet ./... && go test -race -count=1 ./...
+        working-directory: backend
+      - run: go install golang.org/x/vuln/cmd/govulncheck@v1.8.0 && govulncheck ./...
+        working-directory: backend
+      - run: python3 -m unittest discover -s scripts -p 'test_*.py'
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with: {persist-credentials: false}
+      - run: python3 scripts/ci-integration.py
+  images:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        component: [backend, frontend, storage, portal, postgres, gateway]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with: {persist-credentials: false}
+      - name: Build deployable image
+        env:
+          COMPONENT: ${{ matrix.component }}
+        run: |
+          case "$COMPONENT" in
+            portal) docker build --pull -f saas/Dockerfile.portal --build-arg TARGETOS=linux --build-arg TARGETARCH=amd64 -t "crm-check:$COMPONENT" backend ;;
+            frontend) docker build --pull --build-arg NEXT_PUBLIC_API_URL=/api/backend --build-arg NEXT_PUBLIC_MVP_FINANCE_ENABLED=false --build-arg NEXT_PUBLIC_MVP_WAREHOUSE_ENABLED=false -t "crm-check:$COMPONENT" frontend ;;
+            backend|storage) docker build --pull -t "crm-check:$COMPONENT" "$COMPONENT" ;;
+            postgres) docker pull postgres:15-alpine && docker tag postgres:15-alpine "crm-check:$COMPONENT" ;;
+            gateway) docker pull nginx:alpine && docker tag nginx:alpine "crm-check:$COMPONENT" ;;
+            *) exit 1 ;;
+          esac
+      - name: Block high and critical container advisories
+        env:
+          COMPONENT: ${{ matrix.component }}
+        run: |
+          mkdir -p artifacts/production-audit
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v "$PWD/artifacts/production-audit:/reports" \
+            aquasec/trivy:0.75.0 image --scanners vuln --severity HIGH,CRITICAL --exit-code 1 \
+            --format json --output "/reports/image-$COMPONENT.json" "crm-check:$COMPONENT"
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: image-security-${{ matrix.component }}
+          path: artifacts/production-audit/image-*.json
+          retention-days: 14

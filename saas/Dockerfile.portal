@@ -1,0 +1,12 @@
+FROM golang:1.26.8-alpine AS build
+ARG TARGETOS=linux
+ARG TARGETARCH=amd64
+WORKDIR /app
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -o /out/saas ./cmd/saas
+FROM scratch
+COPY --from=build /out/saas /saas
+USER 65532:65532
+ENTRYPOINT ["/saas"]
